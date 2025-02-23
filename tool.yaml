@@ -1,0 +1,6 @@
+---
+- name: Install and Configure Prometheus
+  hosts: all
+  become: yes
+  roles:
+    - role: tool

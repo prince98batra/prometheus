@@ -1,0 +1,119 @@
+---
+# Create Prometheus user
+- name: Create Prometheus user
+  user:
+    name: "{{ prometheus_user }}"
+    system: yes
+    shell: /sbin/nologin
+
+# Create required directories
+- name: Create directories for Prometheus
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_user }}"
+    mode: '0755'
+  loop:
+    - "{{ prometheus_config_dir }}"
+    - "{{ prometheus_data_dir }}"
+    - "{{ prometheus_log_dir }}"
+    - "{{ prometheus_install_dir }}"
+
+# Download Prometheus
+- name: Download Prometheus
+  get_url:
+    url: "{{ prometheus_download_url }}"
+    dest: /tmp/prometheus.tar.gz
+
+# Extract and Install Prometheus
+- name: Extract Prometheus
+  unarchive:
+    src: /tmp/prometheus.tar.gz
+    dest: "{{ prometheus_install_dir }}"
+    remote_src: yes
+
+- name: Move Prometheus binaries
+  copy:
+    src: "{{ prometheus_install_dir }}/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+    dest: /usr/local/bin/{{ item }}
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: yes
+  loop:
+    - prometheus
+    - promtool
+
+# Deploy Prometheus config
+- name: Deploy Prometheus config
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_user }}"
+    mode: '0644'
+  notify: Restart Prometheus
+
+# Create Prometheus systemd service
+- name: Configure Prometheus service
+  template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/{{ prometheus_service_name }}.service
+  notify: Restart Prometheus
+
+# Create directory for Node Exporter
+- name: Create directory for Node Exporter
+  file:
+    path: /opt/node_exporter
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+# Install Node Exporter
+- name: Download Node Exporter
+  get_url:
+    url: "{{ node_exporter_download_url }}"
+    dest: /tmp/node_exporter.tar.gz
+
+- name: Extract Node Exporter
+  unarchive:
+    src: /tmp/node_exporter.tar.gz
+    dest: /opt/node_exporter
+    remote_src: yes
+
+- name: Move Node Exporter binary
+  copy:
+    src: /opt/node_exporter/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter
+    dest: /usr/local/bin/node_exporter
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: yes
+
+# Create Node Exporter systemd service
+- name: Configure Node Exporter service
+  template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+  notify: Restart Node Exporter
+
+# Reload systemd
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+# Start Services
+- name: Enable and start Prometheus
+  systemd:
+    name: "{{ prometheus_service_name }}"
+    enabled: yes
+    state: started
+
+- name: Enable and start Node Exporter
+  systemd:
+    name: node_exporter
+    enabled: yes
+    state: started
+# tasks file for tool

@@ -1,0 +1,13 @@
+---
+- name: Restart Prometheus
+  systemd:
+    name: "{{ prometheus_service_name }}"
+    state: restarted
+    enabled: yes
+
+- name: Restart Node Exporter
+  systemd:
+    name: node_exporter
+    state: restarted
+    enabled: yes
+# handlers file for tool
