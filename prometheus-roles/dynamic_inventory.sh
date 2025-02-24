@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Fetching IPs directly from the instances module
+# Fetch outputs from Terraform
 PUBLIC_IP=$(terraform -chdir=../prometheus-terraform/modules/instances output -raw public_instance_ip)
 PRIVATE_IP=$(terraform -chdir=../prometheus-terraform/modules/instances output -raw private_instance_ip)
 
-# Generate dynamic inventory
+# Generate Ansible inventory file
 cat <<EOF
 [public]
 $PUBLIC_IP ansible_user=ubuntu
