@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    tools {
+        terraform 'Terraform'  // Ensure this matches the name set in Global Tool Configuration
+    }
+
+    environment {
+        ANSIBLE_HOST_KEY_CHECKING = 'False'  // To avoid SSH prompt issues
+    }
+
     stages {
         stage('Terraform Init') {
             steps {
@@ -42,6 +50,15 @@ pipeline {
                     sh 'terraform destroy -auto-approve'
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline executed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check the logs for details.'
         }
     }
 }
