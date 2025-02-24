@@ -3,6 +3,7 @@ pipeline {
 
     tools {
         terraform 'Terraform'  // Match this with the name set in Global Tool Configuration
+        ansible 'Ansible'      // Match this with the name set in Global Tool Configuration
     }
 
     environment {
