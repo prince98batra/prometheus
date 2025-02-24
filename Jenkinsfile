@@ -64,9 +64,6 @@ pipeline {
         }
 
         stage('Terraform Destroy') {
-            when {
-                beforeInput true
-            }
             steps {
                 input message: 'Do you want to destroy the infrastructure?', ok: 'Destroy'
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
