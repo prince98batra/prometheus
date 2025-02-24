@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Fetching IPs directly from the instances module
-PUBLIC_IP=$(terraform -chdir=../prometheus-terraform output -raw instances_public_instance_ip)
-PRIVATE_IP=$(terraform -chdir=../prometheus-terraform output -raw instances_private_instance_ip)
+PUBLIC_IP=$(terraform -chdir=../prometheus-terraform/modules/instances output -raw public_instance_ip)
+PRIVATE_IP=$(terraform -chdir=../prometheus-terraform/modules/instances output -raw private_instance_ip)
 
 # Generate dynamic inventory
 cat <<EOF
