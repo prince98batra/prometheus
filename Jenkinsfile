@@ -50,7 +50,8 @@ pipeline {
                 withCredentials([sshUserPrivateKey(credentialsId: 'aws-ssh-key', keyFileVariable: 'SSH_KEY')]) {
                     dir('prometheus-roles') {
                         sh 'chmod +x dynamic_inventory.sh'
-                        sh 'ansible-playbook -i dynamic_inventory.sh playbook.yml --private-key=$SSH_KEY'
+                        sh './dynamic_inventory.sh > inventory.ini'  // Generate inventory file
+                        sh 'ansible-playbook -i inventory.ini playbook.yml --private-key=$SSH_KEY'
                     }
                 }
             }
