@@ -46,17 +46,28 @@ pipeline {
         }
 
         stage('Run Ansible Playbook') {
-    steps {
-        withCredentials([sshUserPrivateKey(credentialsId: 'aws-ssh-key', keyFileVariable: 'SSH_KEY')]) {
-            dir('prometheus-roles') {
-                sh 'chmod +x dynamic_inventory.sh'
-                sh './dynamic_inventory.sh > inventory.ini'  // Generate inventory
-                sh 'cat inventory.ini'  // Debug output for verification
-                sh 'ansible-playbook -i inventory.ini playbook.yml --private-key=$SSH_KEY'
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'aws-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                    dir('prometheus-roles') {
+                        sh 'chmod +x dynamic_inventory.sh'
+                        sh './dynamic_inventory.sh > inventory.ini'  // Generate inventory
+
+                        // 🔁 Debug: Print the generated inventory for verification
+                        sh 'echo "Generated Inventory File:"'
+                        sh 'cat inventory.ini'
+
+                        // 🔁 Debug: Print Terraform Outputs (Public & Private IPs)
+                        dir('../prometheus-terraform') {
+                            sh 'terraform output public_instance_ip'
+                            sh 'terraform output private_instance_ip'
+                        }
+
+                        // Run Ansible playbook
+                        sh 'ansible-playbook -i inventory.ini playbook.yml --private-key=$SSH_KEY'
+                    }
+                }
             }
         }
-    }
-}
     }
 
     post {
