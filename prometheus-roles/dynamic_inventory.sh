@@ -1,42 +1,14 @@
-pipeline {
-    agent any
+#!/bin/bash
 
-    stages {
-        stage('Terraform Init') {
-            steps {
-                sh 'terraform init'
-            }
-        }
+# Fetching IPs directly from the instances module
+PUBLIC_IP=$(terraform -chdir=../prometheus-terraform output -raw instances_public_instance_ip)
+PRIVATE_IP=$(terraform -chdir=../prometheus-terraform output -raw instances_private_instance_ip)
 
-        stage('Terraform Plan') {
-            steps {
-                sh 'terraform plan'
-            }
-        }
+# Generate dynamic inventory
+cat <<EOF
+[public]
+$PUBLIC_IP ansible_user=ubuntu
 
-        stage('Terraform Apply') {
-            steps {
-                sh 'terraform apply -auto-approve'
-            }
-        }
-
-        stage('Run Ansible Playbook') {
-            steps {
-                sh 'ansible-playbook -i dynamic_inventory.sh playbook.yml'
-            }
-        }
-    }
-
-    post {
-        always {
-            script {
-                def userInput = input(
-                    id: 'Proceed', message: 'Do you want to destroy the infrastructure?', ok: 'Destroy'
-                )
-                if (userInput) {
-                    sh 'terraform destroy -auto-approve'
-                }
-            }
-        }
-    }
-}
+[private]
+$PRIVATE_IP ansible_user=ubuntu
+EOF
