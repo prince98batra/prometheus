@@ -57,4 +57,22 @@ pipeline {
 
         stage('Terraform Destroy (Optional)') {
             steps {
-                input message: 'Do 
+                input message: 'Do you want to destroy the infrastructure?', ok: 'Destroy'
+                withCredentials([usernamePassword(credentialsId: 'aws-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    dir('prometheus-terraform') {
+                        sh 'terraform destroy -auto-approve'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Pipeline executed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check the logs for details.'
+        }
+    }
+}
