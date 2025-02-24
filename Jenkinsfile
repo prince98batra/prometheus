@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        terraform 'Terraform'  // Ensure this matches the name set in Global Tool Configuration
+        terraform 'Terraform'  // Match this with the name set in Global Tool Configuration
     }
 
     environment {
@@ -16,7 +16,7 @@ pipeline {
     stages {
         stage('Terraform Init') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'aws-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
                         sh 'terraform init'
                     }
@@ -26,7 +26,7 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'aws-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
                         sh 'terraform plan'
                     }
@@ -36,7 +36,7 @@ pipeline {
 
         stage('Terraform Apply') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'aws-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
                         sh 'terraform apply -auto-approve'
                     }
@@ -58,7 +58,7 @@ pipeline {
         stage('Terraform Destroy (Optional)') {
             steps {
                 input message: 'Do you want to destroy the infrastructure?', ok: 'Destroy'
-                withCredentials([usernamePassword(credentialsId: 'aws-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
                         sh 'terraform destroy -auto-approve'
                     }
