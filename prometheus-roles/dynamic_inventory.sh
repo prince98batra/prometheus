@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Initialize Terraform providers (Fixes any plugin issues)
+# Initialize Terraform providers (Fixes the plugin issue)
 terraform -chdir=../prometheus-terraform/modules/instances init -upgrade -reconfigure
 
 # Fetch outputs from Terraform
