@@ -58,21 +58,25 @@ pipeline {
                 }
             }
         }
+
+        stage('Terraform Destroy') {
+            when {
+                expression { return true }  // This ensures that the stage always runs
+            }
+            steps {
+                input message: 'Do you want to destroy the infrastructure?', ok: 'Destroy'
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                    dir('prometheus-terraform') {
+                        sh 'terraform destroy -auto-approve'
+                    }
+                }
+            }
+        }
     }
 
     post {
         always {
-            stage('Terraform Destroy') {
-                steps {
-                    input message: 'Do you want to destroy the infrastructure?', ok: 'Destroy'
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-                        dir('prometheus-terraform') {
-                            sh 'terraform destroy -auto-approve'
-                        }
-                    }
-                    echo '⚙️ Pipeline execution completed.'
-                }
-            }
+            echo '⚙️ Pipeline execution completed.'
         }
         success {
             echo '✅ Pipeline executed successfully!'
