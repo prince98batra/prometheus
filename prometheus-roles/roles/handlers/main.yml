@@ -5,9 +5,9 @@
     state: restarted
     enabled: yes
 
-- name: Restart Node Exporter
+- name: Restart Alertmanager
   systemd:
-    name: node_exporter
+    name: alertmanager
     state: restarted
     enabled: yes
-# handlers file for tool
+

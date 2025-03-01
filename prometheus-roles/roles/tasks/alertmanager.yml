@@ -1,0 +1,66 @@
+- name: Create Alertmanager Directory
+  file:
+    path: "{{ alertmanager_install_dir }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: Download Alertmanager Tarball
+  get_url:
+    url: "{{ alertmanager_download_url }}"
+    dest: /tmp/alertmanager.tar.gz
+
+- name: Extract Alertmanager
+  unarchive:
+    src: /tmp/alertmanager.tar.gz
+    dest: "{{ alertmanager_install_dir }}"
+    remote_src: yes
+    extra_opts:
+      - --strip-components=1   
+    owner: prometheus  
+    group: prometheus
+
+- name: Set Correct Permissions for Alertmanager Binaries
+  file:
+    path: "{{ alertmanager_install_dir }}/{{ item }}"
+    state: file
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+  with_items:
+    - alertmanager
+    - amtool
+
+- name: Create Alertmanager Config Directory 
+  file:
+    path: "{{ alertmanager_config_dir }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: Deploy Alertmanager Configuration
+  template:
+    src: alertmanager.yml.j2
+    dest: "{{ alertmanager_config_dir }}/alertmanager.yml"
+    owner: prometheus   
+    group: prometheus   
+    mode: '0644'       
+  notify: Restart Alertmanager
+
+- name: Create Alertmanager Systemd Service
+  template:
+    src: alertmanager.service.j2
+    dest: /etc/systemd/system/alertmanager.service
+  notify: Restart Alertmanager
+
+- name: Reload Systemd Daemon
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and Start Alertmanager
+  systemd:
+    name: alertmanager
+    enabled: yes
+    state: started
