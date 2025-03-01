@@ -12,9 +12,5 @@ alertmanager_version: "0.25.0"
 alertmanager_install_dir: /opt/alertmanager
 alertmanager_config_dir: /etc/alertmanager
 alertmanager_download_url: "https://github.com/prometheus/alertmanager/releases/download/v{{ alertmanager_version }}/alertmanager-{{ alertmanager_version }}.linux-amd64.tar.gz"
-smtp_server: smtp.gmail.com  
-smtp_port: 587
-email_from: "prince03batra@gmail.com"
-email_to: "prince98batra@gmail.com"
-email_password: "hfwc mxnm msvg llur"
+
 
