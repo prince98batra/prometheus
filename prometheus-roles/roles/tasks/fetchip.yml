@@ -7,17 +7,16 @@
     --output text --region us-east-1 | tr '\t' ':' > /tmp/ec2_public_ips_names.txt
   become: yes
   run_once: true
-  when: ansible_default_ipv4.address is defined
+  delegate_to: "{{ ansible_play_hosts_all | first }}"
 
 - name: Read EC2 IP and Name File
   slurp:
     src: /tmp/ec2_public_ips_names.txt
   become: yes
   register: ec2_txt_file
-  when: ansible_default_ipv4.address is defined
+  delegate_to: "{{ ansible_play_hosts_all | first }}"
 
 - name: Set EC2 Instances Fact
   set_fact:
     ec2_instances: "{{ ec2_txt_file['content'] | b64decode | split('\n') | select('!=', '') | list | unique }}"
   when: ec2_txt_file['content'] is defined
-
