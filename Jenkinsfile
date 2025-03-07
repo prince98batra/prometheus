@@ -44,7 +44,14 @@ pipeline {
                 }
             }
         }
-
+        
+  stage('Wait for AWS Metadata Propagation') {  // This will fix your issue
+            steps {
+                echo "Waiting for AWS to propagate EC2 public IPs..."
+                sh 'sleep 60'
+            }
+        }
+        
         stage('Run Ansible Playbook') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
