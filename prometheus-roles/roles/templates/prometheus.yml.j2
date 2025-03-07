@@ -7,7 +7,7 @@ scrape_configs:
     static_configs:
 {% for line in ec2_instances %}
 {% set name_ip = line.split(':') %}
-{% if name_ip[1] != '' %}
+{% if name_ip[1] | length > 0 %}
       - targets: ["{{ name_ip[1] }}:9100"]
         labels:
           instance: "{{ name_ip[0] }}"
@@ -19,7 +19,7 @@ alerting:
     - static_configs:
 {% for line in ec2_instances %}
 {% set name_ip = line.split(':') %}
-{% if name_ip[1] != '' %}
+{% if name_ip[1] | length > 0 %}
         - targets: ["{{ name_ip[1] }}:9093"]
           labels:
             instance: "{{ name_ip[0] }}"
