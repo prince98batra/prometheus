@@ -2,19 +2,21 @@
 - name: Fetch All EC2 Public IPs and Names from AWS
   shell: |
     aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=prometheus-*" \
     --query "Reservations[].Instances[].[Tags[?Key=='Name']|[0].Value, PublicIpAddress]" \
     --output text --region us-east-1 | tr '\t' ':' > /tmp/ec2_public_ips_names.txt
-  delegate_to: localhost
-  become: no
-  run_once: true
+  become: yes                  # ✅ It will run on each EC2 instance
+  run_once: true               # Run only once
+  when: ansible_default_ipv4.address is defined  # This will skip Jenkins Server
 
 - name: Read EC2 IP and Name File
   slurp:
     src: /tmp/ec2_public_ips_names.txt
-  delegate_to: localhost    # ✅ This will read from localhost
-  become: no
+  become: yes
   register: ec2_txt_file
+  when: ansible_default_ipv4.address is defined  # Skip Jenkins Server
 
 - name: Set EC2 Instances Fact
   set_fact:
     ec2_instances: "{{ ec2_txt_file['content'] | b64decode | split('\n') | select('!=', '') | list }}"
+  when: ec2_txt_file is defined
