@@ -1,0 +1,20 @@
+---
+- name: Fetch All EC2 Public IPs and Names from AWS
+  shell: |
+    aws ec2 describe-instances \
+    --query "Reservations[].Instances[].[Tags[?Key=='Name']|[0].Value, PublicIpAddress]" \
+    --output text --region us-east-1 | tr '\t' ':' > /tmp/ec2_public_ips_names.txt
+  delegate_to: localhost
+  become: no
+  run_once: true
+
+- name: Read EC2 IP and Name File
+  slurp:
+    src: /tmp/ec2_public_ips_names.txt
+  delegate_to: localhost    # ✅ This will read from localhost
+  become: no
+  register: ec2_txt_file
+
+- name: Set EC2 Instances Fact
+  set_fact:
+    ec2_instances: "{{ ec2_txt_file['content'] | b64decode | split('\n') | select('!=', '') | list }}"
