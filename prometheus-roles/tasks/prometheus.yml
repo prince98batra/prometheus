@@ -66,5 +66,3 @@
     enabled: yes
     state: started
 
-- name: Install Alertmanager
-  include_tasks: alertmanager.yml
