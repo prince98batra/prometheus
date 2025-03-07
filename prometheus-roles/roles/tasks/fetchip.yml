@@ -18,5 +18,6 @@
 
 - name: Set EC2 Instances Fact
   set_fact:
-    ec2_instances: "{{ ec2_txt_file['content'] | b64decode | split('\n') | select('!=', '') | list }}"
+    ec2_instances: "{{ ec2_txt_file['content'] | b64decode | split('\n') | select('!=', '') | list | unique }}"
   when: ec2_txt_file['content'] is defined
+
