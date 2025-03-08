@@ -3,11 +3,11 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'ec2_targets'
-    static_configs:
 {% for line in ec2_instances %}
-{% set name_ip = line.split(':') %}
-{% if name_ip | length == 2 and name_ip[1] | length > 0 %}
+{% set name_ip = line.split() %}
+{% if name_ip | length == 2 and name_ip[1] != 'None' %}
+  - job_name: "{{ name_ip[0] }}"  # Dynamic job name from EC2 instance name
+    static_configs:
       - targets: ["{{ name_ip[1] }}:9100"]
         labels:
           instance: "{{ name_ip[0] }}"
@@ -18,8 +18,8 @@ alerting:
   alertmanagers:
     - static_configs:
 {% for line in ec2_instances %}
-{% set name_ip = line.split(':') %}
-{% if name_ip | length == 2 and name_ip[1] | length > 0 %}
+{% set name_ip = line.split() %}
+{% if name_ip | length == 2 and name_ip[1] != 'None' %}
         - targets: ["{{ name_ip[1] }}:9093"]
           labels:
             instance: "{{ name_ip[0] }}"
