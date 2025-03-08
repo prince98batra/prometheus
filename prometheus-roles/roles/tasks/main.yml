@@ -1,4 +1,7 @@
 ---
+- name: installing aws cli
+  include_tasks: aws-cli.yml
+  
 - name: Fetching IP to set targets
   include_tasks: fetchip.yml
 
