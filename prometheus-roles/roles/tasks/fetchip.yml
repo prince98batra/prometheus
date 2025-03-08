@@ -4,10 +4,26 @@
     aws ec2 describe-instances \
     --filters "Name=instance-state-name,Values=running" \
     --query "Reservations[].Instances[].[Tags[?Key=='Name']|[0].Value, PublicIpAddress]" \
-    --output text --region us-east-1 | tr '\t' ':' > /tmp/ec2_public_ips_names.txt
+    --output text --region us-east-1 | awk '$2 != "None" {print $1 ":" $2}' > /tmp/ec2_public_ips_names.txt
   become: yes
   run_once: true
   delegate_to: "{{ ansible_play_hosts_all | first }}"
+
+- name: Debug - Check if the file is created
+  stat:
+    path: /tmp/ec2_public_ips_names.txt
+  register: file_stat
+  become: yes
+  delegate_to: "{{ ansible_play_hosts_all | first }}"
+
+- name: Debug - Print file existence status
+  debug:
+    msg: "File exists: {{ file_stat.stat.exists }}, Size: {{ file_stat.stat.size }} bytes"
+
+- name: Fail if the file is empty
+  fail:
+    msg: "The file /tmp/ec2_public_ips_names.txt is empty. Check AWS credentials and running instances."
+  when: file_stat.stat.size == 0
 
 - name: Read EC2 IP and Name File
   slurp:
@@ -16,7 +32,15 @@
   register: ec2_txt_file
   delegate_to: "{{ ansible_play_hosts_all | first }}"
 
+- name: Debug - Print the contents of the file
+  debug:
+    msg: "{{ ec2_txt_file['content'] | b64decode | split('\n') }}"
+
 - name: Set EC2 Instances Fact
   set_fact:
     ec2_instances: "{{ ec2_txt_file['content'] | b64decode | split('\n') | select('!=', '') | list | unique }}"
   when: ec2_txt_file['content'] is defined
+
+- name: Debug - Print parsed EC2 instances
+  debug:
+    var: ec2_instances
