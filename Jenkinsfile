@@ -54,12 +54,16 @@ pipeline {
 
         stage('Install and Configure AWS CLI on EC2') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
+                withCredentials([
+                    sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY'),
+                    [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+                ]) {
                     dir('prometheus-roles') {
                         sh 'chmod +x dynamic_inventory.sh'
                         sh './dynamic_inventory.sh'
                         sh 'echo Generated Inventory File:'
                         sh 'cat inventory.ini'
+                        
                         sh '''
                         ansible all -i inventory.ini -m shell -a "
                             sudo apt update -y &&
@@ -74,10 +78,15 @@ pipeline {
 
                         sh '''
                         ansible all -i inventory.ini -m shell -a "
-                            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID &&
-                            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY &&
-                            aws configure set region us-east-1 &&
-                            aws configure list
+                            mkdir -p ~/.aws &&
+                            echo '[default]' > ~/.aws/credentials &&
+                            echo 'aws_access_key_id=${AWS_ACCESS_KEY_ID}' >> ~/.aws/credentials &&
+                            echo 'aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}' >> ~/.aws/credentials &&
+                            echo '[default]' > ~/.aws/config &&
+                            echo 'region=us-east-1' >> ~/.aws/config &&
+                            chmod 600 ~/.aws/credentials ~/.aws/config &&
+                            cat ~/.aws/credentials &&
+                            cat ~/.aws/config
                         " --private-key=$SSH_KEY
                         '''
                     }
