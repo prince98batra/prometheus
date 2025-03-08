@@ -15,6 +15,26 @@ pipeline {
     }
 
     stages {
+        stage('Install AWS CLI') {  // Ensures AWS CLI is installed
+            steps {
+                sh '''
+                if ! command -v aws &> /dev/null
+                then
+                    echo "AWS CLI not found. Installing..."
+                    sudo apt update
+                    sudo apt install -y unzip
+                    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                    unzip awscliv2.zip
+                    sudo ./aws/install
+                    rm -rf awscliv2.zip aws
+                else
+                    echo "AWS CLI is already installed."
+                fi
+                aws --version
+                '''
+            }
+        }
+
         stage('Terraform Init') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
@@ -45,13 +65,13 @@ pipeline {
             }
         }
         
-  stage('Wait for AWS Metadata Propagation') {  // This will fix your issue
+        stage('Wait for AWS Metadata Propagation') {  // Ensures EC2 public IPs are available
             steps {
                 echo "Waiting for AWS to propagate EC2 public IPs..."
                 sh 'sleep 60'
             }
         }
-        
+
         stage('Run Ansible Playbook') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
