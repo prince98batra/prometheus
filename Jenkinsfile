@@ -15,26 +15,6 @@ pipeline {
     }
 
     stages {
-        stage('Install AWS CLI') {
-            steps {
-                sh '''
-                if ! command -v aws &> /dev/null  
-                then  
-                    echo "AWS CLI not found. Installing..."  
-                    apt update -y  
-                    apt install -y unzip  
-                    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"  
-                    unzip awscliv2.zip  
-                    ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update  
-                    rm -rf awscliv2.zip aws  
-                else  
-                    echo "AWS CLI is already installed."  
-                fi  
-                aws --version  
-                '''
-            }
-        }
-
         stage('Terraform Init') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
@@ -64,7 +44,7 @@ pipeline {
                 }
             }
         }
-
+        
         stage('Wait for AWS Metadata Propagation') {  
             steps {
                 echo "Waiting for AWS to propagate EC2 public IPs..."
