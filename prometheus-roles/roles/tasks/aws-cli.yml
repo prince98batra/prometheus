@@ -1,31 +1,23 @@
-- name: Configure EC2 Instances
-  hosts: all
-  become: yes
-  tasks:
-    - name: Install Required Packages
-      apt:
-        name: unzip
-        state: present
-        update_cache: yes
-
-    - name: Download AWS CLI Installer
-      get_url:
-        url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
-        dest: "/tmp/awscliv2.zip"
-
-    - name: Unzip AWS CLI Installer
-      ansible.builtin.unarchive:
-        src: "/tmp/awscliv2.zip"
-        dest: "/tmp"
-        remote_src: yes
-
-    - name: Install AWS CLI
-      command: "/tmp/aws/install"
-
-    - name: Verify AWS CLI Installation
-      command: "aws --version"
-      register: aws_version_output
-
-    - name: Display AWS CLI Version
-      debug:
-        msg: "{{ aws_version_output.stdout }}"
+---
+- name: Install Required Packages
+  apt:
+    name: unzip
+    state: present
+    update_cache: yes
+- name: Download AWS CLI Installer
+  get_url:
+    url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+    dest: /tmp/awscliv2.zip
+- name: Unzip AWS CLI Installer
+  ansible.builtin.unarchive:
+    src: /tmp/awscliv2.zip
+    dest: /tmp
+    remote_src: yes
+- name: Install AWS CLI
+  command: /tmp/aws/install
+- name: Verify AWS CLI Installation
+  command: aws --version
+  register: aws_version_output
+- name: Display AWS CLI Version
+  debug:
+    msg: "{{ aws_version_output.stdout }}"
