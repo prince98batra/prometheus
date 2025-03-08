@@ -2,16 +2,16 @@ pipeline {
     agent any
 
     tools {
-        terraform 'Terraform'  // Matches the name set in Global Tool Configuration
-        ansible 'Ansible'      // Matches the name set in Global Tool Configuration
+        terraform 'Terraform'
+        ansible 'Ansible'
     }
 
     environment {
-        TF_VAR_region = 'us-east-1'                 // Terraform region variable
-        TF_VAR_key_name = 'mykey'                   // Terraform key pair
-        TF_IN_AUTOMATION = 'true'                   // Disable interactive prompts for Terraform
-        ANSIBLE_HOST_KEY_CHECKING = 'False'         // Disable SSH prompt for Ansible
-        ANSIBLE_REMOTE_USER = 'ubuntu'              // Remote SSH user for Ansible
+        TF_VAR_region = 'us-east-1'
+        TF_VAR_key_name = 'mykey'
+        TF_IN_AUTOMATION = 'true'
+        ANSIBLE_HOST_KEY_CHECKING = 'False'
+        ANSIBLE_REMOTE_USER = 'ubuntu'
     }
 
     stages {
@@ -52,39 +52,38 @@ pipeline {
             }
         }
 
-        stage('Install AWS CLI') {
+        stage('Install and Configure AWS CLI on EC2') {
             steps {
-                script {
-                    def cli_check = sh(script: "aws --version || echo 'NOT_INSTALLED'", returnStdout: true).trim()
-                    if (cli_check.contains("NOT_INSTALLED")) {
-                        echo "AWS CLI not found. Installing..."
+                withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
+                    dir('prometheus-roles') {
+                        sh 'chmod +x dynamic_inventory.sh'
+                        sh './dynamic_inventory.sh'
+                        sh 'echo Generated Inventory File:'
+                        sh 'cat inventory.ini'
                         sh '''
-                            sudo apt update -y
-                            sudo apt install -y unzip curl
-                            sudo curl -o "/tmp/awscliv2.zip" "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
-                            sudo unzip -o "/tmp/awscliv2.zip" -d "/tmp"
-                            sudo /tmp/aws/install --update
-                            aws --version
-                            sudo rm -rf /tmp/aws /tmp/awscliv2.zip
+                        ansible all -i inventory.ini -m shell -a "
+                            sudo apt update -y &&
+                            sudo apt install -y unzip curl &&
+                            curl -o '/tmp/awscliv2.zip' 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' &&
+                            unzip -o '/tmp/awscliv2.zip' -d '/tmp' &&
+                            sudo /tmp/aws/install --update &&
+                            aws --version &&
+                            rm -rf /tmp/aws /tmp/awscliv2.zip
+                        " --private-key=$SSH_KEY
                         '''
-                    } else {
-                        echo "AWS CLI is already installed."
+
+                        sh '''
+                        ansible all -i inventory.ini -m shell -a "
+                            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID &&
+                            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY &&
+                            aws configure set region us-east-1 &&
+                            aws configure list
+                        " --private-key=$SSH_KEY
+                        '''
                     }
                 }
-            }
-        }
-
-        stage('Configure AWS CLI') {
-            steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                    echo "Configuring AWS CLI with Jenkins credentials..."
-                    sh '''
-                        aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-                        aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-                        aws configure set region us-east-1
-                        aws configure list
-                    '''
-                }
+                echo "Waiting 60 seconds for AWS CLI setup to complete..."
+                sh 'sleep 60'
             }
         }
 
@@ -92,10 +91,6 @@ pipeline {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
                     dir('prometheus-roles') {
-                        sh 'chmod +x dynamic_inventory.sh'
-                        sh './dynamic_inventory.sh'
-                        sh 'echo Generated Inventory File:'
-                        sh 'cat inventory.ini'  // Verify the output of the inventory
                         sh 'ansible-playbook -i inventory.ini playbook.yml --private-key=$SSH_KEY'
                     }
                 }
