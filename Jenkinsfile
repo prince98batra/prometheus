@@ -119,16 +119,16 @@ pipeline {
                     sh 'terraform destroy -auto-approve'
                 }
             }
-            echo '⚙️ Pipeline execution completed.'
+            echo ':gear: Pipeline execution completed.'
         }
         success {
-            echo '✅ Pipeline executed successfully!'
+            echo ':white_check_mark: Pipeline executed successfully!'
         }
         failure {
-            echo '❌ Pipeline failed. Check the logs for details.'
+            echo ':x: Pipeline failed. Check the logs for details.'
         }
         aborted {
-            echo '🚫 Pipeline was manually aborted.'
+            echo ':no_entry_sign: Pipeline was manually aborted.'
         }
     }
 }
