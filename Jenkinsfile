@@ -54,23 +54,24 @@ pipeline {
         stage('Terraform Apply or Destroy') {
             steps {
                 script {
-                    def userChoice = input message: 'Choose Terraform Action:', parameters: [
-                        choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select Terraform action')
-                    ]
+                    def action = input(
+                        message: 'Choose Terraform Action',
+                        parameters: [choice(name: 'Action', choices: ['apply', 'destroy'], description: 'Select Action')]
+                    )
 
-                    def confirm = input message: "Are you sure you want to proceed with ${userChoice}?", parameters: [
-                        booleanParam(name: 'CONFIRM', defaultValue: false, description: 'Confirm action')
-                    ]
+                    def confirm = input(
+                        message: "Are you sure you want to proceed with ${action}?",
+                        parameters: [booleanParam(name: 'CONFIRM', defaultValue: false, description: 'Confirm action')]
+                    )
 
                     if (confirm) {
                         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                             dir('prometheus-terraform') {
-                                sh "terraform ${userChoice}"
+                                sh "terraform ${action}"
                             }
                         }
-                        applySuccess = (userChoice == 'apply')
                     } else {
-                        error "User canceled the Terraform ${userChoice} operation."
+                        error "User canceled the Terraform ${action} operation."
                     }
                 }
             }
@@ -78,7 +79,7 @@ pipeline {
 
         stage('Install and Configure AWS CLI on EC2') {
             when {
-                expression { applySuccess }
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
                 withCredentials([
@@ -88,7 +89,6 @@ pipeline {
                     dir('prometheus-roles') {
                         sh 'chmod +x dynamic_inventory.sh'
                         sh './dynamic_inventory.sh'
-                        sh 'echo Generated Inventory File:'
                         sh 'cat inventory.ini'
 
                         sh '''
@@ -111,28 +111,24 @@ pipeline {
                             echo 'aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}' >> ~/.aws/credentials &&
                             echo '[default]' > ~/.aws/config &&
                             echo 'region=us-east-1' >> ~/.aws/config &&
-                            chmod 600 ~/.aws/credentials ~/.aws/config &&
-                            cat ~/.aws/credentials &&
-                            cat ~/.aws/config
+                            chmod 600 ~/.aws/credentials ~/.aws/config
                         " --private-key=$SSH_KEY
                         '''
                     }
                 }
-                echo "Waiting 60 seconds for AWS CLI setup to complete..."
                 sh 'sleep 60'
             }
         }
 
         stage('Run Ansible Playbook') {
             when {
-                expression { applySuccess }
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
                     dir('prometheus-roles') {
                         sh 'chmod +x dynamic_inventory.sh'
                         sh './dynamic_inventory.sh'
-                        sh 'echo Generated Inventory File:'
                         sh 'cat inventory.ini'
                         sh 'ansible-playbook -i inventory.ini playbook.yml --private-key=$SSH_KEY'
                     }
@@ -143,16 +139,16 @@ pipeline {
 
     post {
         always {
-            echo ':gear: Pipeline execution completed.'
+            echo 'Pipeline execution completed.'
         }
         success {
-            echo ':white_check_mark: Pipeline executed successfully!'
+            echo 'Pipeline executed successfully!'
         }
         failure {
-            echo ':x: Pipeline failed. Check the logs for details.'
+            echo 'Pipeline failed. Check logs for details.'
         }
         aborted {
-            echo ':no_entry_sign: Pipeline was manually aborted.'
+            echo 'Pipeline was manually aborted.'
         }
     }
 }
