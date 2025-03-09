@@ -25,4 +25,6 @@ module "instances" {
 output "public_instance_ip" {
   value = module.instances.public_instance_ip
 }
-
+output "fetch_name" {
+  value = module.instances.fetch_name
+}
