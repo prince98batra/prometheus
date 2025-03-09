@@ -51,9 +51,6 @@ pipeline {
             withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
                 dir('prometheus-roles') {
                     sh '''
-                    echo "Using Dynamic Inventory:"
-                    ansible-inventory -i aws_ec2.yml --list
-
                     echo "Running Ansible Playbook..."
                     ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i aws_ec2.yml playbook.yml --private-key=$SSH_KEY -u ubuntu
                     '''
