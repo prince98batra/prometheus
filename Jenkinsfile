@@ -58,20 +58,19 @@ pipeline {
                         choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select Terraform action')
                     ]
 
-                    if (userChoice == 'apply') {
+                    def confirm = input message: "Are you sure you want to proceed with ${userChoice}?", parameters: [
+                        booleanParam(name: 'CONFIRM', defaultValue: false, description: 'Confirm action')
+                    ]
+
+                    if (confirm) {
                         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                             dir('prometheus-terraform') {
-                                sh 'terraform apply'
+                                sh "terraform ${userChoice}"
                             }
                         }
-                        applySuccess = true
+                        applySuccess = (userChoice == 'apply')
                     } else {
-                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-                            dir('prometheus-terraform') {
-                                sh 'terraform destroy'
-                            }
-                        }
-                        applySuccess = false
+                        error "User canceled the Terraform ${userChoice} operation."
                     }
                 }
             }
