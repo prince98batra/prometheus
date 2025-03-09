@@ -42,20 +42,15 @@ pipeline {
                         choice(name: 'ACTION', choices: ['Apply', 'Destroy', 'Skip'], description: 'Select whether to apply, destroy, or skip.')
                     ]
 
-                    if (userInput == 'Apply') {
-                        currentBuild.result = 'SUCCESS'  // Proceed with apply if the user chooses Apply
-                    } else if (userInput == 'Destroy') {
-                        currentBuild.result = 'SUCCESS'  // Proceed with destroy if the user chooses Destroy
-                    } else {
-                        currentBuild.result = 'SUCCESS'  // Skip if the user chooses Skip
-                    }
+                    // Store user choice in environment variable
+                    env.ACTION = userInput
                 }
             }
         }
 
         stage('Terraform Apply') {
             when {
-                expression { return currentBuild.result == 'SUCCESS' && input == 'Apply' }
+                expression { return env.ACTION == 'Apply' }
             }
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
@@ -68,7 +63,7 @@ pipeline {
 
         stage('Run Ansible Playbook') {
             when {
-                expression { return currentBuild.result == 'SUCCESS' && input == 'Apply' }
+                expression { return env.ACTION == 'Apply' }
             }
             steps {
                 withAWS(credentials: 'aws-creds', region: 'us-east-1') {
@@ -88,7 +83,7 @@ pipeline {
 
         stage('Terraform Destroy') {
             when {
-                expression { return currentBuild.result == 'SUCCESS' && input == 'Destroy' }
+                expression { return env.ACTION == 'Destroy' }
             }
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
