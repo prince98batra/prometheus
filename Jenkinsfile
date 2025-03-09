@@ -47,20 +47,22 @@ pipeline {
 
   stage('Run Ansible Playbook') {
     steps {
-        withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
-            dir('prometheus-roles') {
-                sh '''
-                echo "Using Dynamic Inventory:"
-                ansible-inventory -i dynamic_inventory.yml --list
+        withAWS(credentials: 'aws-creds', region: 'us-east-1') {
+            withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
+                dir('prometheus-roles') {
+                    sh '''
+                    echo "Using Dynamic Inventory:"
+                    ansible-inventory -i dynamic_inventory.yml --list
 
-                echo "Running Ansible Playbook..."
-                ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i dynamic_inventory.yml playbook.yml --private-key=$SSH_KEY -u ubuntu
-                '''
+                    echo "Running Ansible Playbook..."
+                    ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i dynamic_inventory.yml playbook.yml --private-key=$SSH_KEY -u ubuntu
+                    '''
+                }
             }
         }
     }
 }
-}
+
 
     post {  
         always {
