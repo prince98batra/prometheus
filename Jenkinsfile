@@ -15,27 +15,11 @@ pipeline {
     }
 
     stages {
-        stage('Checkout SCM') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Terraform Init') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
                         sh 'terraform init'
-                    }
-                }
-            }
-        }
-
-        stage('Terraform Validate') {
-            steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-                    dir('prometheus-terraform') {
-                        sh 'terraform validate'
                     }
                 }
             }
@@ -51,36 +35,24 @@ pipeline {
             }
         }
 
-        stage('Terraform Apply or Destroy') {
+        stage('Terraform Apply') {
             steps {
-                script {
-                    def action = input(
-                        message: 'Choose Terraform Action',
-                        parameters: [choice(name: 'Action', choices: ['apply', 'destroy'], description: 'Select Action')]
-                    )
-
-                    def confirm = input(
-                        message: "Are you sure you want to proceed with ${action}?",
-                        parameters: [booleanParam(name: 'CONFIRM', defaultValue: false, description: 'Confirm action')]
-                    )
-
-                    if (confirm) {
-                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-                            dir('prometheus-terraform') {
-                                sh "terraform ${action}"
-                            }
-                        }
-                    } else {
-                        error "User canceled the Terraform ${action} operation."
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                    dir('prometheus-terraform') {
+                        sh 'terraform apply -auto-approve'
                     }
                 }
             }
         }
 
-        stage('Install and Configure AWS CLI on EC2') {
-            when {
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+        stage('Wait for AWS Metadata Propagation') {  
+            steps {
+                echo "Waiting for AWS to propagate EC2 public IPs..."
+                sh 'sleep 60'
             }
+        }
+
+        stage('Install and Configure AWS CLI on EC2') {
             steps {
                 withCredentials([
                     sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY'),
@@ -89,6 +61,7 @@ pipeline {
                     dir('prometheus-roles') {
                         sh 'chmod +x dynamic_inventory.sh'
                         sh './dynamic_inventory.sh'
+                        sh 'echo Generated Inventory File:'
                         sh 'cat inventory.ini'
 
                         sh '''
@@ -111,25 +84,26 @@ pipeline {
                             echo 'aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}' >> ~/.aws/credentials &&
                             echo '[default]' > ~/.aws/config &&
                             echo 'region=us-east-1' >> ~/.aws/config &&
-                            chmod 600 ~/.aws/credentials ~/.aws/config
+                            chmod 600 ~/.aws/credentials ~/.aws/config &&
+                            cat ~/.aws/credentials &&
+                            cat ~/.aws/config
                         " --private-key=$SSH_KEY
                         '''
                     }
                 }
+                echo "Waiting 60 seconds for AWS CLI setup to complete..."
                 sh 'sleep 60'
             }
         }
 
         stage('Run Ansible Playbook') {
-            when {
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
-            }
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
                     dir('prometheus-roles') {
                         sh 'chmod +x dynamic_inventory.sh'
                         sh './dynamic_inventory.sh'
-                        sh 'cat inventory.ini'
+                        sh 'echo Generated Inventory File:'
+                        sh 'cat inventory.ini'  // Verify the output of the inventory
                         sh 'ansible-playbook -i inventory.ini playbook.yml --private-key=$SSH_KEY'
                     }
                 }
@@ -139,16 +113,22 @@ pipeline {
 
     post {
         always {
-            echo 'Pipeline execution completed.'
+            input message: 'Do you want to destroy the infrastructure?', ok: 'Destroy'
+            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                dir('prometheus-terraform') {
+                    sh 'terraform destroy -auto-approve'
+                }
+            }
+            echo ':gear: Pipeline execution completed.'
         }
         success {
-            echo 'Pipeline executed successfully!'
+            echo ':white_check_mark: Pipeline executed successfully!'
         }
         failure {
-            echo 'Pipeline failed. Check logs for details.'
+            echo ':x: Pipeline failed. Check the logs for details.'
         }
         aborted {
-            echo 'Pipeline was manually aborted.'
+            echo ':no_entry_sign: Pipeline was manually aborted.'
         }
     }
 }
