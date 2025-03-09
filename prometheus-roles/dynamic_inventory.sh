@@ -1,11 +1,10 @@
-#!/bin/bash
-
-# Fetch IPs from Terraform output
-public_ip=$(terraform -chdir=../prometheus-terraform output -raw public_instance_ip)
-
-# Generate Ansible dynamic inventory
-cat <<EOF > inventory.ini
-[public]
-$public_ip ansible_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY
-
-EOF
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-east-1
+filters:
+  instance-state-name: running
+keyed_groups:
+  - key: tags.prometheus-server
+    prefix: tag
+compose:
+  ansible_host: public_ip_address
