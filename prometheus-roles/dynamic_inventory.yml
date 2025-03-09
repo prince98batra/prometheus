@@ -2,8 +2,11 @@ plugin: amazon.aws.aws_ec2
 regions:
   - us-east-1
 filters:
-  tag:fetch_name: "prometheus-instance"
+  "tag:fetch_name": "prometheus-instance"
   instance-state-name: "running"
+keyed_groups:
+  - key: tags.Name
+    prefix: tag_Name_
 hostnames:
   - public-ip-address
 compose:
