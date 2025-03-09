@@ -15,11 +15,27 @@ pipeline {
     }
 
     stages {
+        stage('Checkout SCM') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Terraform Init') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
                         sh 'terraform init'
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Validate') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                    dir('prometheus-terraform') {
+                        sh 'terraform validate'
                     }
                 }
             }
@@ -35,17 +51,36 @@ pipeline {
             }
         }
 
-        stage('Terraform Apply') {
+        stage('Terraform Apply or Destroy') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-                    dir('prometheus-terraform') {
-                        sh 'terraform apply -auto-approve'
+                script {
+                    def userChoice = input message: 'Choose Terraform Action:', parameters: [
+                        choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select Terraform action')
+                    ]
+
+                    if (userChoice == 'apply') {
+                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                            dir('prometheus-terraform') {
+                                sh 'terraform apply'
+                            }
+                        }
+                        applySuccess = true
+                    } else {
+                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                            dir('prometheus-terraform') {
+                                sh 'terraform destroy'
+                            }
+                        }
+                        applySuccess = false
                     }
                 }
             }
         }
-        
+
         stage('Install and Configure AWS CLI on EC2') {
+            when {
+                expression { applySuccess }
+            }
             steps {
                 withCredentials([
                     sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY'),
@@ -90,13 +125,16 @@ pipeline {
         }
 
         stage('Run Ansible Playbook') {
+            when {
+                expression { applySuccess }
+            }
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
                     dir('prometheus-roles') {
                         sh 'chmod +x dynamic_inventory.sh'
                         sh './dynamic_inventory.sh'
                         sh 'echo Generated Inventory File:'
-                        sh 'cat inventory.ini'  // Verify the output of the inventory
+                        sh 'cat inventory.ini'
                         sh 'ansible-playbook -i inventory.ini playbook.yml --private-key=$SSH_KEY'
                     }
                 }
@@ -106,12 +144,6 @@ pipeline {
 
     post {
         always {
-            input message: 'Do you want to destroy the infrastructure?', ok: 'Destroy'
-            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-                dir('prometheus-terraform') {
-                    sh 'terraform destroy -auto-approve'
-                }
-            }
             echo ':gear: Pipeline execution completed.'
         }
         success {
