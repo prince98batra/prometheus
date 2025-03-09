@@ -5,7 +5,7 @@ keyed_groups:
   - key: tags.prometheus-server
     prefix: ""
   - key: instance_state
-    prefix: state
+    prefix: state_
 filters:
   instance-state-name: running
 hostnames:
