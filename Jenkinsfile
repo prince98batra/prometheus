@@ -52,10 +52,10 @@ pipeline {
                 dir('prometheus-roles') {
                     sh '''
                     echo "Using Dynamic Inventory:"
-                    ansible-inventory -i dynamic_inventory.yml --list
+                    ansible-inventory -i aws_ec2.yml --list
 
                     echo "Running Ansible Playbook..."
-                    ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i dynamic_inventory.yml playbook.yml --private-key=$SSH_KEY -u ubuntu
+                    ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i aws_ec2.yml playbook.yml --private-key=$SSH_KEY -u ubuntu
                     '''
                 }
             }
