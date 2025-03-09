@@ -10,4 +10,4 @@ keyed_groups:
 hostnames:
   - public-ip-address
 compose:
-  ansible_host: public-ip-address
+  ansible_host: public_ip_address  
