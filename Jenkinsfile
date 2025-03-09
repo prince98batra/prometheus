@@ -44,14 +44,7 @@ pipeline {
                 }
             }
         }
-
-        stage('Wait for AWS Metadata Propagation') {  
-            steps {
-                echo "Waiting for AWS to propagate EC2 public IPs..."
-                sh 'sleep 60'
-            }
-        }
-
+        
         stage('Install and Configure AWS CLI on EC2') {
             steps {
                 withCredentials([
