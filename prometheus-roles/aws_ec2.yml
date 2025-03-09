@@ -2,5 +2,8 @@ plugin: amazon.aws.aws_ec2
 regions:
   - us-east-1
 filters:
-  tag:fetch_name: 
+  tag:fetch_name:
     - prometheus-instance
+  instance-state-name: running
+compose:
+  ansible_host: public_ip_address
