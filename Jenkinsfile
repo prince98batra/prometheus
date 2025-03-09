@@ -45,19 +45,16 @@ pipeline {
             }
         }
 
-        stage('Run Ansible Playbook') {
+  stage('Run Ansible Playbook') {
     steps {
         withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
             dir('prometheus-roles') {
                 sh '''
-                echo "Generating Dynamic Inventory..."
+                echo "Using Dynamic Inventory:"
                 ansible-inventory -i dynamic_inventory.yml --list
 
-                echo "Fetching target instance..."
-                TARGET_IP=$(ansible-inventory -i dynamic_inventory.yml --list | jq -r '.["_meta"].hostvars | keys[]')
-
-                echo "Connecting to ${TARGET_IP} and running playbook..."
-                ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ${TARGET_IP}, playbook.yml --private-key=$SSH_KEY -u ubuntu
+                echo "Running Ansible Playbook..."
+                ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i dynamic_inventory.yml playbook.yml --private-key=$SSH_KEY -u ubuntu
                 '''
             }
         }
