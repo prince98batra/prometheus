@@ -25,6 +25,16 @@ pipeline {
             }
         }
 
+        stage('Terraform Validate') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                    dir('prometheus-terraform') {
+                        sh 'terraform validate'
+                    }
+                }
+            }
+        }
+
         stage('Terraform Plan') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
@@ -39,7 +49,7 @@ pipeline {
             steps {
                 script {
                     def userInput = input message: 'Choose the action to perform:', parameters: [
-                        choice(name: 'ACTION', choices: ['Apply', 'Destroy', 'Skip'], description: 'Select whether to apply, destroy, or skip.')
+                        choice(name: 'ACTION', choices: ['Apply', 'Destroy'], description: 'Select whether to apply or destroy.')
                     ]
 
                     // Store user choice in environment variable
@@ -53,6 +63,7 @@ pipeline {
                 expression { return env.ACTION == 'Apply' }
             }
             steps {
+                echo "You have chosen to apply the Terraform changes."
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
                         sh 'terraform apply -auto-approve'
@@ -66,6 +77,7 @@ pipeline {
                 expression { return env.ACTION == 'Apply' }
             }
             steps {
+                echo "Running Ansible Playbook after applying the changes."
                 withAWS(credentials: 'aws-creds', region: 'us-east-1') {
                     withCredentials([sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY')]) {
                         dir('prometheus-roles') {
@@ -86,6 +98,7 @@ pipeline {
                 expression { return env.ACTION == 'Destroy' }
             }
             steps {
+                echo "You have chosen to destroy the Terraform infrastructure."
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
                         sh 'terraform destroy -auto-approve'
