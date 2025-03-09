@@ -6,9 +6,4 @@ filters:
 keyed_groups:
   - key: tags.Name
     prefix: tag_Name__
-hostnames:
-  - public_ip_address
-  - private_ip_address
-  - tag:Name
-compose:
-  ansible_host: public_ip_address
+
