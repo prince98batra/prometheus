@@ -1,9 +1,3 @@
 plugin: amazon.aws.aws_ec2
 regions:
   - us-east-1
-filters:
-  tag:Name: "prometheus-server"
-keyed_groups:
-  - key: tags.Name
-    prefix: tag_Name__
-
