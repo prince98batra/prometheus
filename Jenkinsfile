@@ -89,7 +89,7 @@ pipeline {
     sleep 60
     echo "Running Ansible Playbook..."
     ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i aws_ec2.yml playbook.yml \
-    --private-key=$SSH_KEY -u ubuntu --extra-vars "smtp_auth_password=${SMTP_PASS}"
+    --private-key=$SSH_KEY -u ubuntu --extra-vars 'smtp_auth_password="${SMTP_PASS}"'
     '''
 }
             }
