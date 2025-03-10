@@ -48,12 +48,12 @@ pipeline {
         stage('User Input - Choose Action') {
             steps {
                 script {
-                    def userInput = input message: 'Choose the action to perform:', parameters: [
-                        choice(name: 'ACTION', choices: ['Apply', 'Destroy'], description: 'Select whether to apply or destroy.')
-                    ]
-
-                    // Store user choice in environment variable
-                    env.ACTION = userInput
+                    env.ACTION = input(
+                        message: 'Choose an action:',
+                        parameters: [
+                            choice(name: 'ACTION', choices: ['Apply', 'Destroy'], description: 'Select Terraform action.')
+                        ]
+                    )
                 }
             }
         }
@@ -63,10 +63,21 @@ pipeline {
                 expression { return env.ACTION == 'Apply' }
             }
             steps {
-                echo "You have chosen to apply the Terraform changes."
+                script {
+                    def userConfirmation = input(
+                        message: "Type 'yes' to proceed with Terraform Apply:",
+                        parameters: [
+                            string(name: 'CONFIRMATION', description: "Type 'yes' to continue or anything else to cancel.")
+                        ]
+                    )
+                    if (userConfirmation != 'yes') {
+                        error("Terraform Apply canceled by user.")
+                    }
+                }
+                echo "Executing Terraform Apply..."
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
-                        sh 'terraform apply -auto-approve'
+                        sh 'terraform apply'
                     }
                 }
             }
@@ -98,10 +109,21 @@ pipeline {
                 expression { return env.ACTION == 'Destroy' }
             }
             steps {
-                echo "You have chosen to destroy the Terraform infrastructure."
+                script {
+                    def userConfirmation = input(
+                        message: "Type 'yes' to proceed with Terraform Destroy:",
+                        parameters: [
+                            string(name: 'CONFIRMATION', description: "Type 'yes' to continue or anything else to cancel.")
+                        ]
+                    )
+                    if (userConfirmation != 'yes') {
+                        error("Terraform Destroy canceled by user.")
+                    }
+                }
+                echo "Executing Terraform Destroy..."
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
-                        sh 'terraform destroy -auto-approve'
+                        sh 'terraform destroy'
                     }
                 }
             }
@@ -119,7 +141,7 @@ pipeline {
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) completed successfully.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
                 to: 'prince98batra@gmail.com',
-                mimeType: 'text/html'  // Ensures proper HTML rendering
+                mimeType: 'text/html'
             )
         }
         failure {
@@ -129,7 +151,7 @@ pipeline {
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) failed.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
                 to: 'prince98batra@gmail.com',
-                mimeType: 'text/html'  // Ensures proper HTML rendering
+                mimeType: 'text/html'
             )
         }
         aborted {
@@ -139,7 +161,7 @@ pipeline {
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) was aborted.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
                 to: 'prince98batra@gmail.com',
-                mimeType: 'text/html'  // Ensures proper HTML rendering
+                mimeType: 'text/html'
             )
         }
     }
