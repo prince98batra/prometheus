@@ -118,7 +118,8 @@ pipeline {
                 subject: "Jenkins Pipeline SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) completed successfully.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
-                to: 'prince98batra@gmail.com'
+                to: 'prince98batra@gmail.com',
+                mimeType: 'text/html'  // Ensures proper HTML rendering
             )
         }
         failure {
@@ -127,7 +128,8 @@ pipeline {
                 subject: "Jenkins Pipeline FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) failed.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
-                 to: 'prince98batra@gmail.com'
+                to: 'prince98batra@gmail.com',
+                mimeType: 'text/html'  // Ensures proper HTML rendering
             )
         }
         aborted {
@@ -136,7 +138,8 @@ pipeline {
                 subject: "Jenkins Pipeline ABORTED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) was aborted.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
-               to: 'prince98batra@gmail.com'
+                to: 'prince98batra@gmail.com',
+                mimeType: 'text/html'  // Ensures proper HTML rendering
             )
         }
     }
