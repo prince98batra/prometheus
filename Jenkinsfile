@@ -48,12 +48,23 @@ pipeline {
         stage('User Input - Choose Action') {
             steps {
                 script {
-                    env.ACTION = input(
-                        message: 'Choose an action:',
-                        parameters: [
-                            choice(name: 'ACTION', choices: ['Apply', 'Destroy'], description: 'Select Terraform action.')
-                        ]
-                    )
+                    def userInput = input message: 'Choose the action to perform:', parameters: [
+                        choice(name: 'ACTION', choices: ['Apply', 'Destroy'], description: 'Select whether to apply or destroy.')
+                    ]
+                    env.ACTION = userInput
+                }
+            }
+        }
+
+        stage('Confirm Action') {
+            steps {
+                script {
+                    def confirmation = input message: "Do you want to proceed with ${env.ACTION}?", parameters: [
+                        choice(name: 'CONFIRMATION', choices: ['yes', 'no'], description: 'Type "yes" to proceed or "no" to cancel.')
+                    ]
+                    if (confirmation != 'yes') {
+                        error("Pipeline aborted by user.")
+                    }
                 }
             }
         }
@@ -63,21 +74,10 @@ pipeline {
                 expression { return env.ACTION == 'Apply' }
             }
             steps {
-                script {
-                    def userConfirmation = input(
-                        message: "Type 'yes' to proceed with Terraform Apply:",
-                        parameters: [
-                            string(name: 'CONFIRMATION', description: "Type 'yes' to continue or anything else to cancel.")
-                        ]
-                    )
-                    if (userConfirmation != 'yes') {
-                        error("Terraform Apply canceled by user.")
-                    }
-                }
-                echo "Executing Terraform Apply..."
+                echo "You have chosen to apply the Terraform changes."
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
-                        sh 'terraform apply'
+                        sh 'terraform apply'  // Removed -auto-approve, user inputs "yes" manually in UI
                     }
                 }
             }
@@ -109,21 +109,10 @@ pipeline {
                 expression { return env.ACTION == 'Destroy' }
             }
             steps {
-                script {
-                    def userConfirmation = input(
-                        message: "Type 'yes' to proceed with Terraform Destroy:",
-                        parameters: [
-                            string(name: 'CONFIRMATION', description: "Type 'yes' to continue or anything else to cancel.")
-                        ]
-                    )
-                    if (userConfirmation != 'yes') {
-                        error("Terraform Destroy canceled by user.")
-                    }
-                }
-                echo "Executing Terraform Destroy..."
+                echo "You have chosen to destroy the Terraform infrastructure."
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
-                        sh 'terraform destroy'
+                        sh 'terraform destroy'  // Removed -auto-approve, user inputs "yes" manually in UI
                     }
                 }
             }
