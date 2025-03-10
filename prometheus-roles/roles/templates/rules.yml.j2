@@ -8,7 +8,7 @@ groups:
           severity: critical
         annotations:
           summary: "High CPU Usage on {{ '{{ $labels.instance }}' }}"
-          description: "CPU usage is above 80% on instance {{ '{{ $labels.instance }}' }}"
+          description: "CPU usage is above 80% on instance {{ '{{ $labels.instance }}' }} (IP: {{ '{{ $labels.__address__ | replace(\":9100\", \"\") }}' }})"
 
       - alert: InstanceDown
         expr: up == 0
@@ -17,4 +17,4 @@ groups:
           severity: critical
         annotations:
           summary: "Instance Down - {{ '{{ $labels.instance }}' }}"
-          description: "The instance {{ '{{ $labels.instance }}' }} (Job: {{ '{{ $labels.job }}' }}) is down for more than 1 minute."
+          description: "The instance {{ '{{ $labels.instance }}' }} (IP: {{ '{{ $labels.__address__ | replace(\":9100\", \"\") }}' }}) is down for more than 1 minute."
