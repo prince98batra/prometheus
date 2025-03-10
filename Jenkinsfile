@@ -77,7 +77,15 @@ pipeline {
                 echo "You have chosen to apply the Terraform changes."
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
-                        sh 'terraform apply'  // Removed -auto-approve, user inputs "yes" manually in UI
+                        script {
+                            def userInput = input message: 'Type "yes" to confirm Terraform Apply:', parameters: [
+                                string(name: 'CONFIRM_APPLY', defaultValue: '', description: 'Only "yes" will proceed.')
+                            ]
+                            if (userInput != 'yes') {
+                                error("Terraform Apply aborted by user.")
+                            }
+                        }
+                        sh 'echo "yes" | terraform apply'  // Simulate user input
                     }
                 }
             }
@@ -112,7 +120,15 @@ pipeline {
                 echo "You have chosen to destroy the Terraform infrastructure."
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                     dir('prometheus-terraform') {
-                        sh 'terraform destroy'  // Removed -auto-approve, user inputs "yes" manually in UI
+                        script {
+                            def userInput = input message: 'Type "yes" to confirm Terraform Destroy:', parameters: [
+                                string(name: 'CONFIRM_DESTROY', defaultValue: '', description: 'Only "yes" will proceed.')
+                            ]
+                            if (userInput != 'yes') {
+                                error("Terraform Destroy aborted by user.")
+                            }
+                        }
+                        sh 'echo "yes" | terraform destroy'  // Simulate user input
                     }
                 }
             }
