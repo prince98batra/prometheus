@@ -1,3 +1,5 @@
 ---
 prometheus_user: prometheus
+smtp_auth_username: "prince03batra@gmail.com"
+smtp_auth_password: "{{geib yowa towh wrwt}}"
 # vars file for tool
