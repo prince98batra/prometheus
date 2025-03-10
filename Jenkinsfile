@@ -114,12 +114,30 @@ pipeline {
         }
         success {
             echo ':white_check_mark: Pipeline executed successfully!'
+            emailext(
+                subject: "Jenkins Pipeline SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) completed successfully.</p>
+                         <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
+                to: 'prince98batra@gmail.com'
+            )
         }
         failure {
             echo ':x: Pipeline failed. Check the logs for details.'
+            emailext(
+                subject: "Jenkins Pipeline FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) failed.</p>
+                         <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
+                 to: 'prince98batra@gmail.com'
+            )
         }
         aborted {
             echo ':no_entry_sign: Pipeline was manually aborted.'
+            emailext(
+                subject: "Jenkins Pipeline ABORTED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) was aborted.</p>
+                         <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
+               to: 'prince98batra@gmail.com'
+            )
         }
     }
 }
