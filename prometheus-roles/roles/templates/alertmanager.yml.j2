@@ -2,8 +2,8 @@ global:
   resolve_timeout: 5m
   smtp_smarthost: 'smtp.gmail.com:587'  
   smtp_from: 'prince03batra@gmail.com'  
-  smtp_auth_username: 'prince03batra@gmail.com'
-  smtp_auth_password: 'geib yowa towh wrwt'
+  smtp_auth_username: '{{ smtp_auth_username }}'
+  smtp_auth_password: '{{ smtp_auth_password }}'
   smtp_require_tls: true  
 
 route:
