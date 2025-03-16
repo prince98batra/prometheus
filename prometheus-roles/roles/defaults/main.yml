@@ -7,6 +7,13 @@ prometheus_data_dir: /var/lib/prometheus
 prometheus_log_dir: /var/log/prometheus
 prometheus_service_name: prometheus
 prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+# Nodeexporter Variables
+node_exporter_version: "1.7.0"
+download_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+node_exporter_user: "node_exporter"
+node_exporter_bin_path: "/usr/local/bin/node_exporter"
+node_exporter_service_path: "/etc/systemd/system/node_exporter.service"
+node_exporter_port: "9100"
 # Alertmanager Variables
 alertmanager_version: "0.25.0"
 alertmanager_install_dir: /opt/alertmanager
