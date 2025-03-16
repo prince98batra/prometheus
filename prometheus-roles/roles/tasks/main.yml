@@ -5,5 +5,8 @@
 - name: Install Prometheus
   include_tasks: prometheus.yml
 
+- name: Install node exporter
+  include_tasks: node-exporter.yml
+
 - name: Install Alertmanager
   include_tasks: alertmanager.yml
