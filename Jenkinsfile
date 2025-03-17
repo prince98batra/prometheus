@@ -52,6 +52,7 @@ pipeline {
                         choice(name: 'ACTION', choices: ['Apply', 'Destroy'], description: 'Select whether to apply or destroy.')
                     ]
 
+                    // Store user choice in environment variable
                     env.ACTION = userInput
                 }
             }
@@ -122,7 +123,7 @@ pipeline {
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) completed successfully.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
                 to: 'prince98batra@gmail.com',
-                mimeType: 'text/html'  
+                mimeType: 'text/html'  // Ensures proper HTML rendering
             )
         }
         failure {
@@ -132,7 +133,8 @@ pipeline {
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) failed.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
                 to: 'prince98batra@gmail.com',
-                mimeType: 'text/html'  
+                mimeType: 'text/html'  // Ensures proper HTML rendering
+            )
         }
         aborted {
             echo ':no_entry_sign: Pipeline was manually aborted.'
@@ -141,7 +143,7 @@ pipeline {
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) was aborted.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
                 to: 'prince98batra@gmail.com',
-                mimeType: 'text/html' 
+                mimeType: 'text/html'  // Ensures proper HTML rendering
             )
         }
     }
