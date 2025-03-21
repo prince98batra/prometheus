@@ -83,7 +83,7 @@ pipeline {
                 sshUserPrivateKey(credentialsId: 'ssh-key-prometheus', keyFileVariable: 'SSH_KEY'),
                 string(credentialsId: 'SMTP_PASSWORD', variable: 'SMTP_PASS')
             ]) {
-                dir('prometheus-roles') {
+                dir('prometheus-roles-1') {
                    sh '''
     echo "Waiting for EC2 instance to initialize..."
     sleep 60
@@ -92,6 +92,13 @@ pipeline {
     --private-key=$SSH_KEY -u ubuntu --extra-vars 'smtp_auth_password="${SMTP_PASS}"'
     '''
 }
+  dir('prometheus-roles-2') {
+                    sh '''
+                    echo "Running Ansible Playbook for second instance..."
+                    ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i aws_ec2.yml playbook.yml \
+                    --private-key=$SSH_KEY -u ubuntu --extra-vars 'smtp_auth_password="${SMTP_PASS}"'
+                    '''
+                }              
             }
         }
     }
