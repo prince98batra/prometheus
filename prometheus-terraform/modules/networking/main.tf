@@ -4,17 +4,18 @@ resource "aws_vpc" "main" {
 }
 
 resource "aws_subnet" "public" {
-  count = length(var.public_subnets)
-  vpc_id = aws_vpc.main.id
-  cidr_block = var.public_subnets[count.index]
-  availability_zone = element(["us-east-1a", "us-east-1b"], count.index)
+  count                   = length(var.public_subnets)
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnets[count.index]
+  availability_zone       = element(["us-east-1a", "us-east-1b"], count.index)
   map_public_ip_on_launch = true
+
   tags = { Name = "public-subnet-${count.index + 1}" }
 }
 
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
-  tags = { Name = "prometheus-internet-gateway" }
+  tags   = { Name = "prometheus-internet-gateway" }
 }
 
 resource "aws_route_table" "public" {
@@ -25,9 +26,7 @@ resource "aws_route_table" "public" {
     gateway_id = aws_internet_gateway.gw.id
   }
 
-  tags = {
-    Name = "public-route-table"
-  }
+  tags = { Name = "public-route-table" }
 }
 
 resource "aws_route_table_association" "public" {
@@ -36,11 +35,15 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+# Outputs for individual subnet IDs
 output "vpc_id" {
   value = aws_vpc.main.id
 }
 
-output "public_subnet_ids" {
-  value = aws_subnet.public[*].id
+output "public_subnet_id_1" {
+  value = aws_subnet.public[0].id
 }
 
+output "public_subnet_id_2" {
+  value = aws_subnet.public[1].id
+}
