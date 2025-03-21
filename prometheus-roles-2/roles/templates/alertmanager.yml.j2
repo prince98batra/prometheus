@@ -8,9 +8,20 @@ global:
 
 route:
   receiver: 'email-alert'
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  inhibit_rules:
+    - source_matchers:
+        - alert_source="alertmanager-1"
+      target_matchers:
+        - alert_source="alertmanager-2"
+      equal: ['alertname']
 
 receivers:
-  - name: 'email-alert'
+  - name: "email-alert"
     email_configs:
       - to: 'prince98batra@gmail.com' 
         send_resolved: true
