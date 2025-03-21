@@ -1,0 +1,20 @@
+groups:
+  - name: Alert Rules
+    rules:
+      - alert: HighCpuUsage
+        expr: node_cpu_seconds_total{mode="idle"} < 20
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High CPU Usage on {{ '{{ $labels.instance }}' }}"
+          description: "CPU usage is above 80% on instance {{ '{{ $labels.instance }}' }}"
+
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance Down - {{ '{{ $labels.instance }}' }}"
+          description: "The instance {{ '{{ $labels.instance }}' }} (Job: {{ '{{ $labels.job }}' }}) is down for more than 1 minute."

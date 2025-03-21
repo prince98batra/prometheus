@@ -1,0 +1,5 @@
+---
+prometheus_user: prometheus
+smtp_auth_username: "prince03batra@gmail.com"
+smtp_auth_password: "{{ smtp_auth_password }}"
+# vars file for tool

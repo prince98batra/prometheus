@@ -1,0 +1,50 @@
+---
+- name: Install required packages
+  apt:
+    name:
+      - wget
+      - tar
+    state: present
+  retries: 3
+  delay: 10
+  register: result
+  until: result is succeeded
+
+- name: Download Node Exporter
+  get_url:
+    url: "{{ download_url }}"
+    dest: "/tmp/node_exporter.tar.gz"
+  retries: 5
+  delay: 10
+  register: download
+  until: download is succeeded
+
+- name: Extract Node Exporter
+  unarchive:
+    src: "/tmp/node_exporter.tar.gz"
+    dest: "/tmp/"
+    remote_src: yes
+
+- name: Move Node Exporter binary to {{ node_exporter_bin_path }}
+  command: mv /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter {{ node_exporter_bin_path }}
+  args:
+    creates: "{{ node_exporter_bin_path }}"
+
+- name: Create Node Exporter user
+  user:
+    name: "{{ node_exporter_user }}"
+    shell: /usr/sbin/nologin
+    state: present
+
+- name: Create Systemd Service File
+  template:
+    src: node_exporter.service.j2
+    dest: "{{ node_exporter_service_path }}"
+  notify: Restart Node Exporter
+
+- name: Start Node Exporter Service
+  systemd:
+    name: node_exporter
+    state: started
+    enabled: true
+    daemon_reload: true

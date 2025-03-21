@@ -1,0 +1,19 @@
+---
+- name: Fetch All EC2 Public IPs and Names from AWS
+  shell: |
+    aws ec2 describe-instances \
+    --filters "Name=instance-state-name,Values=running" \
+    --query "Reservations[].Instances[].[Tags[?Key=='Name']|[0].Value, PublicIpAddress]" \
+    --output text --region us-east-1
+  register: ec2_output
+  become: no
+  run_once: true
+  delegate_to: localhost
+
+- name: Debug - Print fetched EC2 instances
+  debug:
+    msg: "{{ ec2_output.stdout_lines }}"
+
+- name: Set EC2 Instances Fact
+  set_fact:
+    ec2_instances: "{{ ec2_output.stdout_lines | select('!=', '') | list | unique }}"
