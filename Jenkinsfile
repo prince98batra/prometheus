@@ -130,7 +130,7 @@ pipeline {
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) completed successfully.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
                 to: 'prince98batra@gmail.com',
-                mimeType: 'text/html'  // Ensures proper HTML rendering
+                mimeType: 'text/html'  
             )
         }
         failure {
@@ -140,7 +140,7 @@ pipeline {
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) failed.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
                 to: 'prince98batra@gmail.com',
-                mimeType: 'text/html'  // Ensures proper HTML rendering
+                mimeType: 'text/html'  
             )
         }
         aborted {
@@ -150,7 +150,7 @@ pipeline {
                 body: """<p>Pipeline <b>${env.JOB_NAME}</b> (Build #${env.BUILD_NUMBER}) was aborted.</p>
                          <p><a href="${env.BUILD_URL}">Click here to view the build details</a>.</p>""",
                 to: 'prince98batra@gmail.com',
-                mimeType: 'text/html'  // Ensures proper HTML rendering
+                mimeType: 'text/html'  
             )
         }
     }
