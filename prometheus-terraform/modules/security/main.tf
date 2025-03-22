@@ -19,7 +19,7 @@ ingress {
     from_port   = 9100
     to_port     = 9100
     protocol    = "tcp"
-    cidr_blocks = ["202.142.122.108/32"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -62,7 +62,7 @@ resource "aws_security_group" "public_sg_2" {
     from_port   = 9100
     to_port     = 9100
     protocol    = "tcp"
-    cidr_blocks = ["202.142.122.108/32"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
