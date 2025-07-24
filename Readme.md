@@ -1,8 +1,15 @@
 ## **Prometheus Monitoring Infrastructure Deployment**
 
-<p align="center">
-  <img src="https://miro.medium.com/v2/resize:fit:720/format:webp/1*Do1Wl_dm7w-wNGUiTQBvuw.png" width="600">
-</p>
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://miro.medium.com/v2/resize:fit:720/format:webp/1*Do1Wl_dm7w-wNGUiTQBvuw.png" width="400">
+    </td>
+    <td align="center">
+      <img src="https://miro.medium.com/v2/resize:fit:1400/format:webp/0*-5AvSvpiveVDbIiV.png" width="400">
+    </td>
+  </tr>
+</table>
 
 ## **Author Information**
 
